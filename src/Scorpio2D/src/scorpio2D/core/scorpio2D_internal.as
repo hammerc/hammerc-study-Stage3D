@@ -7,14 +7,11 @@
 //
 // =================================================================================================
 
-/**
- * Scorpio2D 框架的命名空间.
- * @author wizardc
- */
 package scorpio2D.core
 {
 	/**
-	 * 命名空间.
+	 * Scorpio2D 框架的命名空间.
+	 * @author wizardc
 	 */
 	public namespace scorpio2D_internal;
 }
