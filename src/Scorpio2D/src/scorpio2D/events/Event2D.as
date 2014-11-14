@@ -30,11 +30,6 @@ package scorpio2D.events
 		public static const ADDED_TO_STAGE:String = "addedToStage";
 		
 		/**
-		 * 进入新的一帧时抛出.
-		 */
-		public static const ENTER_FRAME:String = "enterFrame";
-		
-		/**
 		 * 从容器中移除时抛出.
 		 */
 		public static const REMOVED:String = "removed";
@@ -43,11 +38,6 @@ package scorpio2D.events
 		 * 从舞台上移除时抛出.
 		 */
 		public static const REMOVED_FROM_STAGE:String = "removedFromStage";
-		
-		/**
-		 * 舞台尺寸改变时抛出.
-		 */
-		public static const RESIZE:String = "resize";
 		
 		private var _target:EventDispatcher2D;
 		private var _currentTarget:EventDispatcher2D;
