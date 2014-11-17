@@ -9,6 +9,9 @@
 
 package scorpio2D.display
 {
+	import flash.geom.Matrix;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.utils.getQualifiedClassName;
 	
 	import scorpio2D.core.RenderSupport;
@@ -114,6 +117,48 @@ package scorpio2D.display
 		}
 		
 		/**
+		 * 设置或获取宽度.
+		 */
+		public function set width(value:Number):void
+		{
+			_scaleX = 1.0;
+			var actualWidth:Number = this.width;
+			if(actualWidth != 0)
+			{
+				this.scaleX = value / actualWidth;
+			}
+			else
+			{
+				this.scaleX = 1;
+			}
+		}
+		public function get width():Number
+		{
+			return this.getBounds(_parent).width;
+		}
+		
+		/**
+		 * 设置或获取高度.
+		 */
+		public function set height(value:Number):void
+		{
+			_scaleY = 1;
+			var actualHeight:Number = this.height;
+			if(actualHeight != 0)
+			{
+				this.scaleY = value / actualHeight;
+			}
+			else
+			{
+				this.scaleY = 1;
+			}
+		}
+		public function get height():Number
+		{
+			return this.getBounds(_parent).height;
+		}
+		
+		/**
 		 * 设置或获取对象在自己的坐标系的起始 x 坐标点.
 		 */
 		public function set pivotX(value:Number):void
@@ -206,6 +251,39 @@ package scorpio2D.display
 		}
 		
 		/**
+		 * 获取这个对象相对于它的父级的变换矩阵.
+		 */
+		public function get transformationMatrix():Matrix
+		{
+			var matrix:Matrix = new Matrix();
+			if(_pivotX != 0 || _pivotY != 0)
+			{
+				matrix.translate(-_pivotX, -_pivotY);
+			}
+			if(_scaleX != 1 || _scaleY != 1)
+			{
+				matrix.scale(_scaleX, _scaleY);
+			}
+			if(_rotation != 0)
+			{
+				matrix.rotate(_rotation);
+			}
+			if(_x != 0 || _y != 0)
+			{
+				matrix.translate(_x, _y);
+			}
+			return matrix;
+		}
+		
+		/**
+		 * 获取这个对象相对于它的父级坐标系的矩形区域.
+		 */
+		public function get bounds():Rectangle
+		{
+			return this.getBounds(_parent);
+		}
+		
+		/**
 		 * 设置父层对象.
 		 * @param value 父层对象.
 		 */
@@ -248,6 +326,132 @@ package scorpio2D.display
 		public function render(support:RenderSupport, alpha:Number):void
 		{
 			throw new Error("render is a abstract function");
+		}
+		
+		/**
+		 * 获取从一个局部坐标系到另一个坐标系的转换.
+		 * @param targetSpace 目标.
+		 * @return 一个局部坐标系到另一个坐标系的转换.
+		 */
+		public function getTransformationMatrix(targetSpace:DisplayObject2D):Matrix
+		{
+			var rootMatrix:Matrix;
+			var targetMatrix:Matrix;
+			if(targetSpace == this)
+			{
+				return new Matrix();
+			}
+			else if(targetSpace == null)
+			{
+				//为空则遍历到 root
+				rootMatrix = new Matrix();
+				currentObject = this;
+				while(currentObject != null)
+				{
+					rootMatrix.concat(currentObject.transformationMatrix);
+					currentObject = currentObject.parent;
+				}
+				return rootMatrix;
+			}
+			else if(targetSpace._parent == this)//如果目标是子项可以优化, 反转矩阵即可
+			{
+				targetMatrix = targetSpace.transformationMatrix;
+				targetMatrix.invert();
+				return targetMatrix;
+			}
+			else if(targetSpace == _parent)//如果目标是父级也可以优化
+			{
+				return this.transformationMatrix;
+			}
+			//1.寻找当前对象和目标对象的共同父级对象
+			var ancestors:Vector.<DisplayObject2D> = new <DisplayObject2D>[];
+			var commonParent:DisplayObject2D = null;
+			var currentObject:DisplayObject2D = this;
+			while(currentObject != null)
+			{
+				ancestors.push(currentObject);
+				currentObject = currentObject.parent;
+			}
+			currentObject = targetSpace;
+			while(currentObject != null && ancestors.indexOf(currentObject) == -1)
+			{
+				currentObject = currentObject.parent;
+			}
+			if(currentObject == null)
+			{
+				throw new ArgumentError("Object not connected to target");
+			}
+			else
+			{
+				commonParent = currentObject;
+			}
+			//2.获取当前对象到父级对象的转换矩阵
+			rootMatrix = new Matrix();
+			currentObject = this;
+			while(currentObject != commonParent)
+			{
+				rootMatrix.concat(currentObject.transformationMatrix);
+				currentObject = currentObject.parent;
+			}
+			//3.获取目标对象到父级对象的转换矩阵
+			targetMatrix = new Matrix();
+			currentObject = targetSpace;
+			while(currentObject != commonParent)
+			{
+				targetMatrix.concat(currentObject.transformationMatrix);
+				currentObject = currentObject.parent;
+			}
+			//4.合并矩阵获得最终结果
+			targetMatrix.invert();//targetMatrix矩阵是从下到上遍历的需要反转
+			rootMatrix.concat(targetMatrix);
+			return rootMatrix;
+		}
+		
+		/**
+		 * 将一个坐标点从局部坐标系转换到全局 (stage) 坐标系.
+		 * @param localPoint 坐标点.
+		 * @return 坐标点.
+		 */
+		public function localToGlobal(localPoint:Point):Point
+		{
+			var transformationMatrix:Matrix = new Matrix();
+			var currentObject:DisplayObject2D = this;
+			while(currentObject != null)
+			{
+				transformationMatrix.concat(currentObject.transformationMatrix);
+				currentObject = currentObject.parent;
+			}
+			return transformationMatrix.transformPoint(localPoint);
+		}
+		
+		/**
+		 * 将一个坐标点从全局 (stage) 坐标系转换到局部坐标系.
+		 * @param globalPoint 坐标点.
+		 * @return 坐标点.
+		 */
+		public function globalToLocal(globalPoint:Point):Point
+		{
+			var transformationMatrix:Matrix = new Matrix();
+			var currentObject:DisplayObject2D = this;
+			while(currentObject != null)
+			{
+				transformationMatrix.concat(currentObject.transformationMatrix);
+				currentObject = currentObject.parent;
+			}
+			//矩阵是从下到上遍历的所以需要反转
+			transformationMatrix.invert();
+			return transformationMatrix.transformPoint(globalPoint);
+		}
+		
+		/**
+		 * 如果一个对象出现在其它坐标系, 需要用这个方法返回围绕这个对象的一个四边形的区域.
+		 * @param targetSpace 目标.
+		 * @return 这个对象的一个四边形的区域.
+		 */
+		public function getBounds(targetSpace:DisplayObject2D):Rectangle
+		{
+			throw new Error("getBounds is a abstract function");
+			return null;
 		}
 		
 		/**

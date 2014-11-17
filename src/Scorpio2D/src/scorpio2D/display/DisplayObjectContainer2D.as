@@ -9,6 +9,9 @@
 
 package scorpio2D.display
 {
+	import flash.geom.Matrix;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.utils.getQualifiedClassName;
 	
 	import scorpio2D.core.RenderSupport;
@@ -311,6 +314,38 @@ package scorpio2D.display
 					//还原矩阵信息为处理子项之前
 					support.popMatrix();
 				}
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		public override function getBounds(targetSpace:DisplayObject2D):Rectangle
+		{
+			var numChildren:int = _children.length;
+			if(numChildren == 0)
+			{
+				var matrix:Matrix = this.getTransformationMatrix(targetSpace);
+				var position:Point = matrix.transformPoint(new Point(x, y));
+				return new Rectangle(position.x, position.y);
+			}
+			else if(numChildren == 1)
+			{
+				return _children[0].getBounds(targetSpace);
+			}
+			else
+			{
+				var minX:Number = Number.MAX_VALUE, maxX:Number = -Number.MAX_VALUE;
+				var minY:Number = Number.MAX_VALUE, maxY:Number = -Number.MAX_VALUE;
+				for each(var child:DisplayObject2D in _children)
+				{
+					var childBounds:Rectangle = child.getBounds(targetSpace);
+					minX = Math.min(minX, childBounds.x);
+					maxX = Math.max(maxX, childBounds.x + childBounds.width);
+					minY = Math.min(minY, childBounds.y);
+					maxY = Math.max(maxY, childBounds.y + childBounds.height);
+				}
+				return new Rectangle(minX, minY, maxX - minX, maxY - minY);
 			}
 		}
 		

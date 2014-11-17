@@ -16,6 +16,10 @@ package scorpio2D.display
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
+	import flash.geom.Matrix;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
+	import flash.geom.Vector3D;
 	
 	import scorpio2D.core.RenderSupport;
 	import scorpio2D.core.Scorpio2D;
@@ -212,6 +216,45 @@ package scorpio2D.display
 				mIndexBuffer = Scorpio2D.context.createIndexBuffer(6);
 			}
 			mIndexBuffer.uploadFromVector(Vector.<uint>([0, 1, 2, 1, 3, 2]), 0, 6);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		public override function getBounds(targetSpace:DisplayObject2D):Rectangle
+		{
+			var minX:Number = Number.MAX_VALUE, maxX:Number = -Number.MAX_VALUE;
+			var minY:Number = Number.MAX_VALUE, maxY:Number = -Number.MAX_VALUE;
+			var position:Vector3D;
+			var i:int;
+			if(targetSpace == this)
+			{
+				for(i = 0; i < 4; ++i)
+				{
+					position = mVertexData.getPosition(i);
+					minX = Math.min(minX, position.x);
+					maxX = Math.max(maxX, position.x);
+					minY = Math.min(minY, position.y);
+					maxY = Math.max(maxY, position.y);
+				}
+			}
+			else
+			{
+				var transformationMatrix:Matrix = this.getTransformationMatrix(targetSpace);
+				var point:Point = new Point();
+				for(i = 0; i < 4; ++i)
+				{
+					position = mVertexData.getPosition(i);
+					point.x = position.x;
+					point.y = position.y;
+					var transformedPoint:Point = transformationMatrix.transformPoint(point);
+					minX = Math.min(minX, transformedPoint.x);
+					maxX = Math.max(maxX, transformedPoint.x);
+					minY = Math.min(minY, transformedPoint.y);
+					maxY = Math.max(maxY, transformedPoint.y);
+				}
+			}
+			return new Rectangle(minX, minY, maxX - minX, maxY - minY);
 		}
 		
 		/**
