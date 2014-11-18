@@ -23,8 +23,10 @@ package scorpio2D.core
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	import flash.utils.getTimer;
-	
-	import scorpio2D.display.DisplayObject2D;
+
+import scorpio2D.animation.Juggler;
+
+import scorpio2D.display.DisplayObject2D;
 	
 	import scorpio2D.display.Image2D;
 	import scorpio2D.display.Quad2D;
@@ -70,6 +72,8 @@ package scorpio2D.core
 		private var _viewPort:Rectangle;
 		private var _lastFrameTimestamp:Number;
 		
+		private var _juggler:Juggler;
+		
 		/**
 		 * 构造函数.
 		 * @param rootClass 文档类, 初始化完毕的时候, 就会创建这个类的实例, 并作为的 stage 的第一个子显示对象添加.
@@ -105,6 +109,7 @@ package scorpio2D.core
 			_enableErrorChecking = false;
 			_programs = new Dictionary();
 			_support = new RenderSupport();
+			_juggler = new Juggler();
 			if(_current == null)
 			{
 				this.makeCurrent();
@@ -132,6 +137,14 @@ package scorpio2D.core
 		public function get context():Context3D
 		{
 			return _context;
+		}
+		
+		/**
+		 * 获取动画控制器对象.
+		 */
+		public function get juggler():Juggler
+		{
+			return _juggler;
 		}
 		
 		/**
@@ -289,6 +302,8 @@ package scorpio2D.core
 			
 			//子对象播放进入帧事件
 			_stage2D.advanceTime(passedTime);
+			//动画处理
+			_juggler.advanceTime(passedTime);
 			
 			//设置正交矩阵
 			_support.setOrthographicProjection(_stage2D.stageWidth, _stage2D.stageHeight);

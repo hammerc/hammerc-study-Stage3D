@@ -39,6 +39,11 @@ package scorpio2D.events
 		 */
 		public static const REMOVED_FROM_STAGE:String = "removedFromStage";
 		
+		/**
+		 * 影片剪辑播放完毕时抛出.
+		 */
+		public static const MOVIE_COMPLETED:String = "movieCompleted";
+		
 		private var _target:EventDispatcher2D;
 		private var _currentTarget:EventDispatcher2D;
 		private var _type:String;
