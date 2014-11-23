@@ -7,6 +7,7 @@ bin-release/
 .idea/
 .metadata/
 .settings/
+obj/
 
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important
@@ -16,3 +17,4 @@ bin-release/
 .actionScriptProperties
 .flexProperties
 .flexLibProperties
+*.as3proj
