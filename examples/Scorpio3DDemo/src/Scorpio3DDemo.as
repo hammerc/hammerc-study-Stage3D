@@ -18,7 +18,7 @@ package
 		
 		private function addedToStageHandler(event:Event = null):void
 		{
-			var test:Sprite = new PerspectiveTest();
+			var test:Sprite = new ObjModelTest();
 			addChild(test);
 		}
 	}
