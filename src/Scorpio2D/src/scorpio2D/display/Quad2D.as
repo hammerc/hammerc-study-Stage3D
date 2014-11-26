@@ -9,21 +9,16 @@
 
 package scorpio2D.display
 {
-	import com.adobe.utils.AGALMiniAssembler;
-	
-	import flash.display3D.Context3D;
-	import flash.display3D.Context3DProgramType;
-	import flash.display3D.Context3DVertexBufferFormat;
-	import flash.display3D.IndexBuffer3D;
-	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
 	
 	import scorpio2D.core.RenderSupport;
-	import scorpio2D.core.Scorpio2D;
+	import scorpio2D.core.scorpio2D_internal;
 	import scorpio2D.utils.VertexData;
+	
+	use namespace scorpio2D_internal;
 	
 	/**
 	 * 一个四边形(Quad)代表了一个单一颜色或渐变颜色的矩形.
@@ -38,51 +33,30 @@ package scorpio2D.display
 	 */
 	public class Quad2D extends DisplayObject2D
 	{
-		/**
-		 * 着色器名称.
-		 */
-		public static const PROGRAM_NAME:String = "quad";
-		
-		/**
-		 * 注册着色器, 该方法会创建 1 个顶点着色器和 1 个像素着色器对象.
-		 * @param target Scorpio2D 实例对象.
-		 */
-		public static function registerPrograms(target:Scorpio2D):void
-		{
-			var vertexProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			vertexProgramAssembler.assemble(Context3DProgramType.VERTEX,
-					"m44 op, va0, vc0  \n" +  // 4x4 matrix transform to output clipspace
-					"mov v0, va1       \n"    // pass color to fragment program 
-			);
-			var fragmentProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-			fragmentProgramAssembler.assemble(Context3DProgramType.FRAGMENT,
-					"mul ft0, v0, fc0  \n" +  // multiply alpha (fc0) by color (v0)
-					"mov oc, ft0       \n"    // output color
-			);
-			target.registerProgram(PROGRAM_NAME, vertexProgramAssembler.agalcode, fragmentProgramAssembler.agalcode);
-		}
+		private static var _helperVector:Vector3D = new Vector3D();
 		
 		//顶点数据
-		protected var mVertexData:VertexData;
-		//顶点缓冲
-		protected var mVertexBuffer:VertexBuffer3D;
-		//索引缓冲
-		protected var mIndexBuffer:IndexBuffer3D;
+		protected var _vertexData:VertexData;
+		//true 表示顶点即不是白色也不是透明
+		private var _tinted:Boolean;
 		
 		/**
 		 * 构造函数.
 		 * @param width 高度.
 		 * @param height 宽度.
 		 * @param color 颜色.
+		 * @param premultipliedAlpha 是否预乘透明度.
 		 */
-		public function Quad2D(width:Number, height:Number, color:uint = 0xffffff)
+		public function Quad2D(width:Number, height:Number, color:uint = 0xffffff, premultipliedAlpha:Boolean = true)
 		{
-			mVertexData = new VertexData(4, true);
-			mVertexData.setPosition(0, 0.0, 0.0);
-			mVertexData.setPosition(1, width, 0.0);
-			mVertexData.setPosition(2, 0.0, height);
-			mVertexData.setPosition(3, width, height);
-			mVertexData.setUniformColor(color);
+			_vertexData = new VertexData(4, premultipliedAlpha);
+			_vertexData.setPosition(0, 0.0, 0.0);
+			_vertexData.setPosition(1, width, 0.0);
+			_vertexData.setPosition(2, 0.0, height);
+			_vertexData.setPosition(3, width, height);
+			_vertexData.setUniformColor(color);
+			_tinted = color != 0xffffff;
+			this.onVertexDataChanged();
 		}
 		
 		/**
@@ -90,7 +64,7 @@ package scorpio2D.display
 		 */
 		public function get vertexData():VertexData
 		{
-			return mVertexData.clone();
+			return _vertexData.clone();
 		}
 		
 		/**
@@ -98,15 +72,46 @@ package scorpio2D.display
 		 */
 		public function set color(value:uint):void
 		{
-			mVertexData.setUniformColor(value);
-			if(mVertexBuffer != null)
+			for(var i:int = 0; i < 4; ++i)
 			{
-				this.createVertexBuffer();
+				this.setVertexColor(i, value);
+			}
+			if(this.color != 0xffffff)
+			{
+				_tinted = true;
+			}
+			else
+			{
+				_tinted = _vertexData.tinted;
 			}
 		}
 		public function get color():uint
 		{
-			return mVertexData.getColor(0);
+			return _vertexData.getColor(0);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function set alpha(value:Number):void
+		{
+			super.alpha = value;
+			if(this.alpha != 1)
+			{
+				_tinted = true;
+			}
+			else
+			{
+				_tinted = _vertexData.tinted;
+			}
+		}
+		
+		/**
+		 * 获取顶点是否不为白色或不透明.
+		 */
+		scorpio2D_internal function get tinted():Boolean
+		{
+			return _tinted;
 		}
 		
 		/**
@@ -116,10 +121,15 @@ package scorpio2D.display
 		 */
 		public function setVertexColor(vertexID:int, color:uint):void
 		{
-			mVertexData.setColor(vertexID, color);
-			if(mVertexBuffer != null)
+			_vertexData.setColor(vertexID, color);
+			this.onVertexDataChanged();
+			if(color != 0xffffff)
 			{
-				this.createVertexBuffer();
+				_tinted = true;
+			}
+			else
+			{
+				_tinted = _vertexData.tinted;
 			}
 		}
 		
@@ -130,7 +140,7 @@ package scorpio2D.display
 		 */
 		public function getVertexColor(vertexID:int):uint
 		{
-			return mVertexData.getColor(vertexID);
+			return _vertexData.getColor(vertexID);
 		}
 		
 		/**
@@ -140,10 +150,15 @@ package scorpio2D.display
 		 */
 		public function setVertexAlpha(vertexID:int, alpha:Number):void
 		{
-			mVertexData.setAlpha(vertexID, alpha);
-			if(mVertexBuffer != null)
+			_vertexData.setAlpha(vertexID, alpha);
+			this.onVertexDataChanged();
+			if(alpha != 1)
 			{
-				this.createVertexBuffer();
+				_tinted = true;
+			}
+			else
+			{
+				_tinted = _vertexData.tinted;
 			}
 		}
 		
@@ -154,7 +169,14 @@ package scorpio2D.display
 		 */
 		public function getVertexAlpha(vertexID:int):Number
 		{
-			return mVertexData.getAlpha(vertexID);
+			return _vertexData.getAlpha(vertexID);
+		}
+		
+		/**
+		 * 顶点数据改变时回调该方法.
+		 */
+		protected function onVertexDataChanged():void
+		{
 		}
 		
 		/**
@@ -162,60 +184,7 @@ package scorpio2D.display
 		 */
 		override public function render(support:RenderSupport, alpha:Number):void
 		{
-			//根据上层的透明度获取最终会使用的透明度
-			alpha *= this.alpha;
-			//透明度常量
-			var alphaVector:Vector.<Number> = new <Number>[alpha, alpha, alpha, alpha];
-			var context:Context3D = Scorpio2D.context;
-			//创建缓冲对象
-			if(context == null)
-			{
-				throw new Error("Context3D object is required but not available");
-			}
-			if(mVertexBuffer == null)
-			{
-				this.createVertexBuffer();
-			}
-			if(mIndexBuffer == null)
-			{
-				this.createIndexBuffer();
-			}
-			//设置默认的混合因子
-			support.setDefaultBlendFactors(true);
-			//绘制当前图像
-			context.setProgram(Scorpio2D.current.getProgram(PROGRAM_NAME));
-			context.setVertexBufferAt(0, mVertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
-			context.setVertexBufferAt(1, mVertexBuffer, VertexData.COLOR_OFFSET, Context3DVertexBufferFormat.FLOAT_4);
-			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, support.mvpMatrix, true);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, alphaVector, 1);
-			context.drawTriangles(mIndexBuffer, 0, 2);
-			//清除顶点数据映射
-			context.setVertexBufferAt(0, null);
-			context.setVertexBufferAt(1, null);
-		}
-		
-		/**
-		 * 创建顶点缓冲并上传至 GPU.
-		 */
-		protected function createVertexBuffer():void
-		{
-			if(mVertexBuffer == null)
-			{
-				mVertexBuffer = Scorpio2D.context.createVertexBuffer(4, VertexData.ELEMENTS_PER_VERTEX);
-			}
-			mVertexBuffer.uploadFromVector(this.vertexData.data, 0, 4);
-		}
-		
-		/**
-		 * 创建索引缓冲并上传至 GPU.
-		 */
-		protected function createIndexBuffer():void
-		{
-			if(mIndexBuffer == null)
-			{
-				mIndexBuffer = Scorpio2D.context.createIndexBuffer(6);
-			}
-			mIndexBuffer.uploadFromVector(Vector.<uint>([0, 1, 2, 1, 3, 2]), 0, 6);
+			support.batchQuad(this, alpha);
 		}
 		
 		/**
@@ -225,17 +194,16 @@ package scorpio2D.display
 		{
 			var minX:Number = Number.MAX_VALUE, maxX:Number = -Number.MAX_VALUE;
 			var minY:Number = Number.MAX_VALUE, maxY:Number = -Number.MAX_VALUE;
-			var position:Vector3D;
 			var i:int;
 			if(targetSpace == this)
 			{
 				for(i = 0; i < 4; ++i)
 				{
-					position = mVertexData.getPosition(i);
-					minX = Math.min(minX, position.x);
-					maxX = Math.max(maxX, position.x);
-					minY = Math.min(minY, position.y);
-					maxY = Math.max(maxY, position.y);
+					_vertexData.getPosition(i, _helperVector);
+					minX = Math.min(minX, _helperVector.x);
+					maxX = Math.max(maxX, _helperVector.x);
+					minY = Math.min(minY, _helperVector.y);
+					maxY = Math.max(maxY, _helperVector.y);
 				}
 			}
 			else
@@ -244,9 +212,9 @@ package scorpio2D.display
 				var point:Point = new Point();
 				for(i = 0; i < 4; ++i)
 				{
-					position = mVertexData.getPosition(i);
-					point.x = position.x;
-					point.y = position.y;
+					_vertexData.getPosition(i, _helperVector);
+					point.x = _helperVector.x;
+					point.y = _helperVector.y;
 					var transformedPoint:Point = transformationMatrix.transformPoint(point);
 					minX = Math.min(minX, transformedPoint.x);
 					maxX = Math.max(maxX, transformedPoint.x);
@@ -258,19 +226,13 @@ package scorpio2D.display
 		}
 		
 		/**
-		 * @inheritDoc
+		 * 拷贝顶点数据到一个新的顶点数据实例.
+		 * @param targetData 目标对象.
+		 * @param targetVertexID 索引.
 		 */
-		override public function dispose():void
+		public function copyVertexDataTo(targetData:VertexData, targetVertexID:int = 0):void
 		{
-			if(mVertexBuffer != null)
-			{
-				mVertexBuffer.dispose();
-			}
-			if(mIndexBuffer != null)
-			{
-				mIndexBuffer.dispose();
-			}
-			super.dispose();
+			_vertexData.copyTo(targetData, targetVertexID);
 		}
 	}
 }

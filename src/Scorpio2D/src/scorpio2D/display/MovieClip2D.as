@@ -360,9 +360,9 @@ package scorpio2D.display
 				++i;
 				durationSum += duration;
 			}
-			if(previousTime < _totalTime && _currentTime == _totalTime && this.hasEventListener(Event2D.MOVIE_COMPLETED))
+			if(previousTime < _totalTime && _currentTime == _totalTime && this.hasEventListener(Event2D.COMPLETE))
 			{
-				this.dispatchEvent(new Event2D(Event2D.MOVIE_COMPLETED));
+				this.dispatchEvent(new Event2D(Event2D.COMPLETE));
 			}
 			this.advanceTime(carryOverTime);
 		}

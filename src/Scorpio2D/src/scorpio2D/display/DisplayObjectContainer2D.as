@@ -69,7 +69,7 @@ package scorpio2D.display
 				child.removeFromParent();
 				_children.splice(index, 0, child);
 				child.setParent(this);
-				child.dispatchEvent(new Event2D(Event2D.ADDED));
+				child.dispatchEvent(new Event2D(Event2D.ADDED, true));
 				if(this.stage != null)
 				{
 					child.dispatchEventOnChildren(new Event2D(Event2D.ADDED_TO_STAGE));
@@ -225,7 +225,7 @@ package scorpio2D.display
 			if(index >= 0 && index < this.numChildren)
 			{
 				var child:DisplayObject2D = _children[index];
-				child.dispatchEvent(new Event2D(Event2D.REMOVED));
+				child.dispatchEvent(new Event2D(Event2D.REMOVED, true));
 				if(this.stage != null)
 				{
 					child.dispatchEventOnChildren(new Event2D(Event2D.REMOVED_FROM_STAGE));
@@ -295,24 +295,30 @@ package scorpio2D.display
 		/**
 		 * @inheritDoc
 		 */
-		override public function render(support:RenderSupport, alpha:Number):void
+		override public function render(support:RenderSupport, parentAlpha:Number):void
 		{
 			//上层的透明度和当前的透明度相乘
-			alpha *= this.alpha;
+			var alpha:Number = parentAlpha * this.alpha;
 			//处理所有子项
-			for each(var child:DisplayObject2D in _children)
+			var numChildren:int = _children.length;
+			for(var i:int = 0; i < numChildren; ++i)
 			{
+				var child:DisplayObject2D = _children[i];
 				//如果该子项需要进行渲染
 				if(child.alpha != 0 && child.visible && child.scaleX != 0 && child.scaleY != 0)
 				{
-					//保存当前的矩阵信息, 留给其它子项使用
+					//保存当前的矩阵和混合模式信息, 留给其它子项使用
 					support.pushMatrix();
+					support.pushBlendMode();
+					//记录当前的混合模式
+					support.blendMode = child.blendMode;
 					//转换矩阵, 获得添加了子项的矩阵信息
 					support.transformMatrix(child);
 					//渲染子项
 					child.render(support, alpha);
-					//还原矩阵信息为处理子项之前
+					//还原矩阵和混合模式信息为处理子项之前
 					support.popMatrix();
+					support.popBlendMode();
 				}
 			}
 		}

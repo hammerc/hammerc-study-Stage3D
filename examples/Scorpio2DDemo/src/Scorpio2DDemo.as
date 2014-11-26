@@ -20,7 +20,7 @@ package
 		
 		private function addedToStageHandler(event:Event = null):void
 		{
-			var scorpio2D:Scorpio2D = new Scorpio2D(MovieClipTest, stage);
+			var scorpio2D:Scorpio2D = new Scorpio2D(QuadBatchTest, stage);
 			scorpio2D.antiAliasing = 4;
 			scorpio2D.start();
 		}

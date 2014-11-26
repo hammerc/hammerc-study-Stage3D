@@ -53,14 +53,15 @@ package scorpio2D.events
 			}
 			//抛出侦听的事件
 			var stopImmediatePropagation:Boolean = false;
-			if(listeners != null && listeners.length != 0)
+			var numListeners:int = listeners == null ? 0 : listeners.length;
+			if(numListeners != 0)
 			{
 				//设置当前目标对象
 				event.setCurrentTarget(this);
 				//抛出事件
-				for each(var listener:Function in listeners)
+				for(var i:int = 0; i < numListeners; ++i)
 				{
-					listener(event);
+					listeners[i](event);
 					//如果事件被立即终止则跳出循环
 					if(event.stopsImmediatePropagation)
 					{
@@ -117,7 +118,7 @@ package scorpio2D.events
 		 */
 		public function hasEventListener(type:String):Boolean
 		{
-			return _eventListeners != null && _eventListeners[type] != null;
+			return _eventListeners != null && type in _eventListeners;
 		}
 		
 		/**
@@ -127,20 +128,23 @@ package scorpio2D.events
 		 */
 		public function removeEventListener(type:String, listener:Function):void
 		{
-			var listeners:Vector.<Function> = _eventListeners[type] as Vector.<Function>;
-			listeners = listeners.filter(
-				function(item:Function, ...rest):Boolean
+			if(_eventListeners != null)
+			{
+				var listeners:Vector.<Function> = _eventListeners[type] as Vector.<Function>;
+				listeners = listeners.filter(
+						function(item:Function, ...rest):Boolean
+						{
+							return item != listener;
+						}
+				);
+				if(listeners.length == 0)
 				{
-					return item != listener;
+					delete _eventListeners[type];
 				}
-			);
-			if(listeners.length == 0)
-			{
-				delete _eventListeners[type];
-			}
-			else
-			{
-				_eventListeners[type] = listeners;
+				else
+				{
+					_eventListeners[type] = listeners;
+				}
 			}
 		}
 		
@@ -150,7 +154,7 @@ package scorpio2D.events
 		 */
 		public function removeEventListeners(type:String = null):void
 		{
-			if(type)
+			if(type && _eventListeners != null)
 			{
 				delete _eventListeners[type];
 			}
