@@ -18,7 +18,7 @@ package
 		
 		private function addedToStageHandler(event:Event = null):void
 		{
-			var test:Sprite = new TextureEffectTest();
+			var test:Sprite = new DepthTest();
 			addChild(test);
 		}
 	}

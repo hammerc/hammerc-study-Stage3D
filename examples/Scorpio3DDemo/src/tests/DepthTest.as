@@ -32,10 +32,10 @@ package tests
 	import scorpio3D.utils.Utils;
 	
 	/**
-	 * 纹理效果测试.
+	 * 深度测试.
 	 * @author wizardc
 	 */
-	public class TextureEffectTest extends Sprite
+	public class DepthTest extends Sprite
 	{
 		//模型数据
 		[Embed (source = "../../assets/cluster.obj", mimeType = "application/octet-stream")] 
@@ -86,6 +86,8 @@ package tests
 		private var texNumMax:int = 4;
 		private var meshNum:int = -1;
 		private var meshNumMax:int = 4;
+		private var depNum:int = -1;
+		private var depNumMax:int = 1;
 		
 		// used by the GUI
 		private var fpsLast:uint = getTimer();
@@ -94,6 +96,7 @@ package tests
 		private var label1:TextField;
 		private var label2:TextField;
 		private var label3:TextField;
+		private var label4:TextField;
 		
 		// the 3d graphics window on the stage
 		private var context3D:Context3D;
@@ -124,7 +127,7 @@ package tests
 		// Points to whatever the current mesh is
 		private var myMesh:ObjParser;
 		
-		public function TextureEffectTest() 
+		public function DepthTest() 
 		{
 			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
 		}
@@ -187,10 +190,19 @@ package tests
 			label3.defaultTextFormat = myFormat;
 			addChild(label3);
 			
+			label4 = new TextField();
+			label4.x = 10;
+			label4.y = 110;
+			label4.selectable = false;  
+			label4.autoSize = TextFieldAutoSize.LEFT;  
+			label4.defaultTextFormat = myFormat;
+			addChild(label4);
+			
 			// force these labels to be set
 			nextMesh();
 			nextTexture();
 			nextBlendmode();
+			nextDepthTest();
 		}
 		
 		private function onContext3DCreate(event:Event):void 
@@ -319,7 +331,7 @@ package tests
 		
 		private function renderMesh():void 
 		{
-			if (blendNum > 1)
+			if (depNum > 0)
 				// ignore depth zbuffer 
 				// always draw polies even those that are behind others
 				context3D.setDepthTest(false, Context3DCompareMode.LESS);
@@ -397,7 +409,7 @@ package tests
 			// make the terrain face the right way
 			modelmatrix.appendRotation( -90, Vector3D.Y_AXIS);
 			// slowly move the terrain around
-			modelmatrix.appendTranslation(Math.cos(t/300)*1000,Math.cos(t/200)*1000 + 500,-130); 
+			modelmatrix.appendTranslation(Math.cos(t/300)*1000,Math.cos(t/200)*1000 + 500,-1000); 
 			// clear the matrix and append new angles
 			modelViewProjection.identity();
 			modelViewProjection.append(modelmatrix);
@@ -420,6 +432,9 @@ package tests
 				break;
 				case Keyboard.E:
 					nextTexture();
+				break;
+				case Keyboard.R:
+					nextDepthTest();
 				break;
 			}
 		}
@@ -471,6 +486,22 @@ package tests
 				break;
 				case 4:
 					label2.text = '[E] Smoke Texture';
+				break;
+			}
+		}
+		
+		private function nextDepthTest():void
+		{
+			depNum++;
+			if (depNum > depNumMax)
+			depNum = 0;
+			switch(depNum)
+			{
+				case 0:
+					label4.text = '[R] Use Depth Test';
+				break;
+				case 1:
+					label4.text = '[R] No Use Depth Test';
 				break;
 			}
 		}
@@ -566,10 +597,10 @@ package tests
 			context3D.clear(0,0,0);
 			// move or rotate more each frame
 			t += 2.0;
-			// scroll and render the terrain once
-			renderTerrain();
 			// render whatever mesh is selected
 			renderMesh();
+			// scroll and render the terrain once
+			renderTerrain();
 			// present/flip back buffer
 			// now that all meshes have been drawn
 			context3D.present();
