@@ -39,6 +39,7 @@ package scorpio2D.display
 		private var _rotation:Number = 0;
 		private var _alpha:Number = 1;
 		private var _visible:Boolean = true;
+		private var _blendMode:String = BlendMode2D.AUTO;
 		
 		/**
 		 * 构造函数.
@@ -231,7 +232,7 @@ package scorpio2D.display
 		 */
 		public function set alpha(value:Number):void
 		{
-			_alpha = Math.max(0.0, Math.min(1.0, value));
+			_alpha = Math.max(0, Math.min(1, value));
 		}
 		public function get alpha():Number
 		{
@@ -248,6 +249,18 @@ package scorpio2D.display
 		public function get visible():Boolean
 		{
 			return _visible;
+		}
+		
+		/**
+		 * 设置或获取混合模式.
+		 */
+		public function set blendMode(value:String):void
+		{
+			_blendMode = value;
+		}
+		public function get blendMode():String
+		{
+			return _blendMode;
 		}
 		
 		/**

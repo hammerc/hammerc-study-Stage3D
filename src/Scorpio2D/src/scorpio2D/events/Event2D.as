@@ -40,9 +40,29 @@ package scorpio2D.events
 		public static const REMOVED_FROM_STAGE:String = "removedFromStage";
 		
 		/**
-		 * 影片剪辑播放完毕时抛出.
+		 * 完成某项功能时抛出.
 		 */
-		public static const MOVIE_COMPLETED:String = "movieCompleted";
+		public static const COMPLETE:String = "complete";
+		
+		/**
+		 * 上下文对象创建时抛出.
+		 */
+		public static const CONTEXT3D_CREATE:String = "context3DCreate";
+		
+		/**
+		 * 文档类对象创建时抛出.
+		 */
+		public static const ROOT_CREATED:String = "rootCreated";
+		
+		/**
+		 * 从动画管理器被移除时抛出.
+		 */
+		public static const REMOVE_FROM_JUGGLER:String = "removeFromJuggler";
+		
+		/**
+		 * 使用平面化时抛出.
+		 */
+		public static const FLATTEN:String = "flatten";
 		
 		private var _target:EventDispatcher2D;
 		private var _currentTarget:EventDispatcher2D;

@@ -23,24 +23,22 @@ package scorpio2D.core
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	import flash.utils.getTimer;
-
-import scorpio2D.animation.Juggler;
-
-import scorpio2D.display.DisplayObject2D;
 	
-	import scorpio2D.display.Image2D;
-	import scorpio2D.display.Quad2D;
-	
+	import scorpio2D.animation.Juggler;
+	import scorpio2D.display.DisplayObject2D;
 	import scorpio2D.display.Stage2D;
+	import scorpio2D.events.Event2D;
+	import scorpio2D.events.EventDispatcher2D;
 	import scorpio2D.events.ResizeEvent2D;
 	
 	/**
 	 * 框架的核心类, 要使用 Scorpio2D 框架必须实例化一个本类.
 	 * @author wizardc
 	 */
-	public class Scorpio2D
+	public class Scorpio2D extends EventDispatcher2D
 	{
 		private static var _current:Scorpio2D;
+		private static var _handleLostContext:Boolean;
 		
 		/**
 		 * 获取当前正在使用的 Scorpio2D 实例.
@@ -56,6 +54,25 @@ import scorpio2D.display.DisplayObject2D;
 		public static function get context():Context3D
 		{
 			return _current.context;
+		}
+		
+		/**
+		 * 设置或获取
+		 */
+		public static function set handleLostContext(value:Boolean):void
+		{
+			if(_current != null)
+			{
+				throw new Error("'handleLostContext' must be set before Starling instance is created");
+			}
+			else
+			{
+				_handleLostContext = value;
+			}
+		}
+		public static function get handleLostContext():Boolean
+		{
+			return _handleLostContext;
 		}
 		
 		private var _stage3D:Stage3D;
@@ -107,13 +124,10 @@ import scorpio2D.display.DisplayObject2D;
 			_stage = stage;
 			_antiAliasing = 0;
 			_enableErrorChecking = false;
+			this.makeCurrent();
 			_programs = new Dictionary();
 			_support = new RenderSupport();
 			_juggler = new Juggler();
-			if(_current == null)
-			{
-				this.makeCurrent();
-			}
 			//监听原生事件
 			stage.addEventListener(Event.ENTER_FRAME, enterFrameHandler, false, 0, true);
 			stage.addEventListener(Event.RESIZE, resizeHandler, false, 0, true);
@@ -220,9 +234,17 @@ import scorpio2D.display.DisplayObject2D;
 		
 		private function contextCreatedHandler(event:Event):void
 		{
+			if(!handleLostContext && _context != null)
+			{
+				showFatalError("Fatal error: The application lost the device context!");
+				this.stop();
+				return;
+			}
+			this.makeCurrent();
 			initializeGraphicsAPI();
-			initializePrograms();
+			this.dispatchEvent(new Event2D(Event2D.CONTEXT3D_CREATE));
 			initializeRoot();
+			this.dispatchEvent(new Event2D(Event2D.ROOT_CREATED));
 		}
 		
 		private function initializeGraphicsAPI():void
@@ -236,12 +258,6 @@ import scorpio2D.display.DisplayObject2D;
 			updateViewPort();
 			trace("[Scorpio2D] Initialization complete.");
 			trace("[Scorpio2D] Display Driver:" + _context.driverInfo);
-		}
-		
-		private function initializePrograms():void
-		{
-			Quad2D.registerPrograms(this);
-			Image2D.registerPrograms(this);
 		}
 		
 		private function initializeRoot():void
@@ -292,7 +308,7 @@ import scorpio2D.display.DisplayObject2D;
 		
 		private function render():void
 		{
-			if(_context == null)
+			if(_context == null || _context.driverInfo == "Disposed")
 			{
 				return;
 			}
@@ -305,18 +321,17 @@ import scorpio2D.display.DisplayObject2D;
 			//动画处理
 			_juggler.advanceTime(passedTime);
 			
+			//清除画布
+			RenderSupport.clear(_stage2D.color, 1.0);
 			//设置正交矩阵
 			_support.setOrthographicProjection(_stage2D.stageWidth, _stage2D.stageHeight);
-			//设置默认的混合因子
-			_support.setDefaultBlendFactors(true);
-			//清除画布
-			_support.clear(_stage2D.color, 1);
 			//开始渲染所有子对象
 			_stage2D.render(_support, 1);
+			//重置渲染辅助矩阵
+			_support.finishQuadBatch();
+			_support.nextFrame();
 			//将缓冲中的图像显示到屏幕
 			_context.present();
-			//重置渲染辅助矩阵
-			_support.resetMatrix();
 		}
 		
 		/**
@@ -351,6 +366,16 @@ import scorpio2D.display.DisplayObject2D;
 			var program:Program3D = _context.createProgram();
 			program.upload(vertexProgram, fragmentProgram);
 			_programs[name] = program;
+		}
+		
+		/**
+		 * 是否注册了渲染器.
+		 * @param name 名称.
+		 * @return 是否注册了渲染器.
+		 */
+		public function hasProgram(name:String):Boolean
+		{
+			return name in _programs;
 		}
 		
 		/**

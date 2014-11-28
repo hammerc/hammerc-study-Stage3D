@@ -235,19 +235,17 @@ package scorpio2D.textures
 		 * @param vertexData 顶点数据.
 		 * @return 顶点数据.
 		 */
-		public function adjustVertexData(vertexData:VertexData):VertexData
+		public function adjustVertexData(vertexData:VertexData, vertexID:int, count:int):void
 		{
-			var clone:VertexData = vertexData.clone();
 			if(this.frame != null)
 			{
 				var deltaRight:Number = _frame.width + _frame.x - width;
 				var deltaBottom:Number = _frame.height + _frame.y - height;
-				clone.translateVertex(0, -_frame.x, -_frame.y);
-				clone.translateVertex(1, -deltaRight, -_frame.y);
-				clone.translateVertex(2, -_frame.x, -deltaBottom);
-				clone.translateVertex(3, -deltaRight, -deltaBottom);
+				vertexData.translateVertex(vertexID, -_frame.x, -_frame.y);
+				vertexData.translateVertex(vertexID + 1, -deltaRight, -_frame.y);
+				vertexData.translateVertex(vertexID + 2, -_frame.x, -deltaBottom);
+				vertexData.translateVertex(vertexID + 3, -deltaRight, -deltaBottom);
 			}
-			return clone;
 		}
 		
 		/**

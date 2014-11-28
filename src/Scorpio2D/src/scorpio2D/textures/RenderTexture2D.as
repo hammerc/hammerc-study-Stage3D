@@ -9,7 +9,8 @@
 
 package scorpio2D.textures
 {
-	import flash.display3D.textures.TextureBase;
+import flash.display3D.Context3D;
+import flash.display3D.textures.TextureBase;
 	import flash.geom.Rectangle;
 	
 	import scorpio2D.core.RenderSupport;
@@ -93,14 +94,6 @@ package scorpio2D.textures
 		}
 		
 		/**
-		 *@inheritDoc
-		 */
-		override public function adjustVertexData(vertexData:VertexData):VertexData
-		{
-			return _activeTexture.adjustVertexData(vertexData);
-		}
-		
-		/**
 		 * 绘制一个显示对象到纹理, 包括它的位置, 缩放值, 角度和透明度.
 		 * @param object 显示对象.
 		 * @param antiAliasing 抗锯齿程度.
@@ -122,9 +115,12 @@ package scorpio2D.textures
 			function render():void
 			{
 				_support.pushMatrix();
+				_support.pushBlendMode();
+				_support.blendMode = object.blendMode;
 				_support.transformMatrix(object);
 				object.render(_support, 1.0);
 				_support.popMatrix();
+				_support.popBlendMode();
 			}
 		}
 		
@@ -136,21 +132,26 @@ package scorpio2D.textures
 		 */
 		public function drawBundled(drawingBlock:Function, antiAliasing:int = 0):void
 		{
-			Scorpio2D.context.setScissorRectangle(new Rectangle(0, 0, _activeTexture.width, _activeTexture.height));
-			if(this.isPersistent)
+			var context:Context3D = Scorpio2D.context;
+			if(context == null)
+			{
+				throw new Error();
+			}
+			context.setScissorRectangle(new Rectangle(0, 0, _activeTexture.width, _activeTexture.height));
+			if(isPersistent)
 			{
 				var tmpTexture:Texture2D = _activeTexture;
 				_activeTexture = _bufferTexture;
 				_bufferTexture = tmpTexture;
 				_helperImage.texture = _bufferTexture;
 			}
-			Scorpio2D.context.setRenderToTexture(_activeTexture.base, false, antiAliasing);
+			context.setRenderToTexture(_activeTexture.base, false, antiAliasing);
+			RenderSupport.clear();
 			_support.setOrthographicProjection(_nativeWidth, _nativeHeight);
-			_support.setDefaultBlendFactors(true);
-			_support.clear();
-			if (isPersistent)
+			_support.applyBlendMode(true);
+			if(isPersistent)
 			{
-				_helperImage.render(_support, 1.0);
+				_helperImage.render(_support, 1);
 			}
 			try
 			{
@@ -163,9 +164,10 @@ package scorpio2D.textures
 			finally
 			{
 				_drawing = false;
-				_support.resetMatrix();
-				Scorpio2D.context.setScissorRectangle(null);
-				Scorpio2D.context.setRenderToBackBuffer();
+				_support.finishQuadBatch();
+				_support.nextFrame();
+				context.setScissorRectangle(null);
+				context.setRenderToBackBuffer();
 			}
 		}
 		
@@ -174,14 +176,19 @@ package scorpio2D.textures
 		 */
 		public function clear():void
 		{
-			Scorpio2D.context.setRenderToTexture(_activeTexture.base);
-			_support.clear();
-			if(this.isPersistent)
+			var context:Context3D = Scorpio2D.context;
+			if(context == null)
 			{
-				Scorpio2D.context.setRenderToTexture(_activeTexture.base);
-				_support.clear();
+				throw new Error();
 			}
-			Scorpio2D.context.setRenderToBackBuffer();
+			context.setRenderToTexture(_activeTexture.base);
+			RenderSupport.clear();
+			if(isPersistent)
+			{
+				context.setRenderToTexture(_activeTexture.base);
+				RenderSupport.clear();
+			}
+			context.setRenderToBackBuffer();
 		}
 		
 		/**

@@ -111,20 +111,20 @@ package scorpio2D.textures
 		/**
 		 * @inheritDoc
 		 */
-		override public function adjustVertexData(vertexData:VertexData):VertexData
+		override public function adjustVertexData(vertexData:VertexData, vertexID:int, count:int):void
 		{
-			var newData:VertexData = super.adjustVertexData(vertexData);
-			var numVertices:int = vertexData.numVertices;
+			super.adjustVertexData(vertexData, vertexID, count);
 			var clipX:Number = _rootClipping.x;
 			var clipY:Number = _rootClipping.y;
-			var clipWidth:Number = _rootClipping.width;
+			var clipWidth:Number  = _rootClipping.width;
 			var clipHeight:Number = _rootClipping.height;
-			for(var i:int = 0; i < numVertices; ++i)
+			var endIndex:int = vertexID + count;
+			for (var i:int=vertexID; i<endIndex; ++i)
 			{
-				var texCoords:Point = vertexData.getTexCoords(i);
-				newData.setTexCoords(i, clipX + texCoords.x * clipWidth, clipY + texCoords.y * clipHeight);
+				var point:Point = new Point();
+				vertexData.getTexCoords(i, point);
+				vertexData.setTexCoords(i, clipX + point.x * clipWidth, clipY + point.y * clipHeight);
 			}
-			return newData;
 		}
 	}
 }
