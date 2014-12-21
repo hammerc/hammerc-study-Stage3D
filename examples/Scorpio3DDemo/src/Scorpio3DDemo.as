@@ -5,7 +5,7 @@ package
 	
 	import tests.*;
 	
-	[SWF(width=550, height=400, backgroundColor="#808080", frameRate=60)]
+	[SWF(width=640, height=480, frameRate=60, backgroundColor="#000000")]
 	public class Scorpio3DDemo extends Sprite
 	{
 		public function Scorpio3DDemo()
@@ -18,7 +18,7 @@ package
 		
 		private function addedToStageHandler(event:Event = null):void
 		{
-			var test:Sprite = new DepthTest();
+			var test:Sprite = new SpaceWarTest();
 			addChild(test);
 		}
 	}
