@@ -190,7 +190,7 @@ package
 			_car = new AWPRaycastVehicle(turning, carBody);
 			_physicsWorld.addVehicle(_car);
 			
-			//添加 4 个轮子, 最后的参数指定轮子是否会转动
+			//添加 4 个轮子, 最后的参数指定轮子是否是前轮
 			_car.addWheel(container.getChildAt(0), new Vector3D(-110, 80, 170), new Vector3D(0, -1, 0), new Vector3D(-1, 0, 0), 40, 60, turning, true);
 			_car.addWheel(container.getChildAt(3), new Vector3D(110, 80, 170), new Vector3D(0, -1, 0), new Vector3D(-1, 0, 0), 40, 60, turning, true);
 			_car.addWheel(container.getChildAt(1), new Vector3D(-110, 90, -210), new Vector3D(0, -1, 0), new Vector3D(-1, 0, 0), 40, 60, turning, false);
