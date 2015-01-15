@@ -18,7 +18,7 @@ package
 		
 		private function addedToStageHandler(event:Event = null):void
 		{
-			var test:Sprite = new ParticleTest();
+			var test:Sprite = new SpaceWar();
 			addChild(test);
 		}
 	}

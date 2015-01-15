@@ -1,0 +1,87 @@
+# 3ds Max Wavefront OBJ Exporter v0.94b - (c)2007 guruware
+# File Created: 28.06.2011 17:47:50
+
+#
+# object fx_bolt_red_horiz
+#
+
+v  -0.50 1.00 0.00
+v  -0.50 -3.00 0.00
+v  0.50 1.00 0.00
+v  0.50 -3.00 0.00
+# 4 vertices
+
+vt 0.00 1.00 0.00
+vt 0.00 0.00 0.00
+vt 1.00 1.00 0.00
+vt 1.00 0.00 0.00
+# 4 texture coords
+
+g fx_bolt_red_horiz
+f 1/1 2/2 3/3 
+f 4/4 3/3 2/2 
+# 2 faces
+
+#
+# object fx_bolt_red_vert
+#
+
+v  -0.00 1.00 0.50
+v  -0.00 -3.00 0.50
+v  0.00 1.00 -0.50
+v  0.00 -3.00 -0.50
+# 4 vertices
+
+vt 0.00 1.00 0.00
+vt 0.00 0.00 0.00
+vt 1.00 1.00 0.00
+vt 1.00 0.00 0.00
+# 4 texture coords
+
+g fx_bolt_red_vert
+f 5/5 6/6 7/7 
+f 8/8 7/7 6/6 
+# 2 faces
+
+#
+# object fx_bolt_head_top
+#
+
+v  -0.50 -0.00 0.00
+v  0.50 -0.00 0.00
+v  0.50 -0.00 0.50
+v  -0.50 -0.00 0.50
+# 4 vertices
+
+vt 0.00 0.75 0.00
+vt 1.00 0.75 0.00
+vt 1.00 1.00 0.00
+vt 0.00 1.00 0.00
+# 4 texture coords
+
+g fx_bolt_head_top
+f 9/9 10/10 11/11 
+f 11/11 12/12 9/9 
+# 2 faces
+
+#
+# object fx_bolt_head_bottom
+#
+
+v  0.50 -0.00 -0.00
+v  -0.50 -0.00 0.00
+v  -0.50 -0.00 -0.50
+v  0.50 -0.00 -0.50
+# 4 vertices
+
+vt 0.00 0.75 0.00
+vt 1.00 0.75 0.00
+vt 1.00 1.00 0.00
+vt 0.00 1.00 0.00
+# 4 texture coords
+
+g fx_bolt_head_bottom
+f 13/13 14/14 15/15 
+f 15/15 16/16 13/13 
+# 2 faces
+
